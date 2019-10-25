@@ -19,6 +19,7 @@
 package grpc
 
 import (
+	"errors"
 	"golang.org/x/net/context"
 )
 
@@ -34,7 +35,11 @@ func (cc *ClientConn) Invoke(ctx context.Context, method string, args, reply int
 	if cc.dopts.unaryInt != nil {
 		return cc.dopts.unaryInt(ctx, method, args, reply, cc, invoke, opts...)
 	}
-	return invoke(ctx, method, args, reply, cc, opts...)
+	err := invoke(ctx, method, args, reply, cc, opts...)
+	if err != nil {
+		return errors.New(method + ": " + err.Error())
+	}
+	return nil
 }
 
 func combine(o1 []CallOption, o2 []CallOption) []CallOption {
