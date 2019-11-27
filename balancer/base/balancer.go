@@ -93,6 +93,10 @@ func (b *baseBalancer) HandleResolvedAddrs(addrs []resolver.Address, err error) 
 			// The entry will be deleted in HandleSubConnStateChange.
 		}
 	}
+	if len(addrs) == 0 {
+		b.regeneratePicker()
+		b.cc.UpdateBalancerState(b.state, b.picker)
+	}
 }
 
 // regeneratePicker takes a snapshot of the balancer, and generates a picker
@@ -100,6 +104,10 @@ func (b *baseBalancer) HandleResolvedAddrs(addrs []resolver.Address, err error) 
 //  - errPicker with ErrTransientFailure if the balancer is in TransientFailure,
 //  - built by the pickerBuilder with all READY SubConns otherwise.
 func (b *baseBalancer) regeneratePicker() {
+	if len(b.subConns) == 0 {
+		b.picker = NewErrPicker(balancer.ErrNoSubConnAvailable)
+		return
+	}
 	if b.state == connectivity.TransientFailure {
 		b.picker = NewErrPicker(balancer.ErrTransientFailure)
 		return

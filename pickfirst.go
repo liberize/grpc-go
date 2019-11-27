@@ -58,13 +58,16 @@ func (b *pickfirstBalancer) HandleResolvedAddrs(addrs []resolver.Address, err er
 		if err != nil {
 			//TODO(yuxuanli): why not change the cc state to Idle?
 			grpclog.Errorf("pickfirstBalancer: failed to NewSubConn: %v", err)
-			return
+		} else {
+			b.cc.UpdateBalancerState(connectivity.Idle, &picker{sc: b.sc})
+			b.sc.Connect()
 		}
-		b.cc.UpdateBalancerState(connectivity.Idle, &picker{sc: b.sc})
-		b.sc.Connect()
 	} else {
 		b.sc.UpdateAddresses(addrs)
 		b.sc.Connect()
+	}
+	if len(addrs) == 0 {
+		b.cc.UpdateBalancerState(connectivity.Idle, &picker{err: balancer.ErrNoSubConnAvailable})
 	}
 }
 

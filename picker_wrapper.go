@@ -138,7 +138,10 @@ func (bp *pickerWrapper) pick(ctx context.Context, failfast bool, opts balancer.
 		if err != nil {
 			switch err {
 			case balancer.ErrNoSubConnAvailable:
-				continue
+				if !failfast {
+					continue
+				}
+				return nil, nil, status.Errorf(codes.Unavailable, "%v", err)
 			case balancer.ErrTransientFailure:
 				if !failfast {
 					continue
