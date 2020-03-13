@@ -19,8 +19,8 @@
 package grpc
 
 import (
-	"errors"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/status"
 )
 
 // Invoke sends the RPC request on the wire and returns after response is
@@ -37,7 +37,10 @@ func (cc *ClientConn) Invoke(ctx context.Context, method string, args, reply int
 	}
 	err := invoke(ctx, method, args, reply, cc, opts...)
 	if err != nil {
-		return errors.New(method + ": " + err.Error())
+		if s, ok := status.FromError(err); ok {
+			return status.Error(s.Code(), method + ": " + s.Message())
+		}
+		return err
 	}
 	return nil
 }
